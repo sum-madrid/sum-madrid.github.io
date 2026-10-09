@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Календар свят — СУМ Мадрид</title>
+<meta name="description" content="Державні, пам'ятні, релігійні та народні дати України й СУМівські свята: календар Мадридського осередку СУМ.">
+<meta property="og:title" content="Календар свят — СУМ Мадрид">
+<meta property="og:description" content="Українські та СУМівські свята на кожен місяць. Натисніть на день — побачите подію.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#ffffff; --ink:#1c1c1a; --soft:#6b6b66; --rule:rgba(28,28,26,0.13);
+    --navy:#2a4d7a; --burgundy:#8a2f3a; --violet:#5a4a80; --forest:#3a6b45; --gold:#8f6416;
+    --on:#ffffff; --flash:rgba(163,118,31,0.25);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#171715; --ink:#eceae4; --soft:#a7a49c; --rule:rgba(236,234,228,0.16);
+      --navy:#8fb0e0; --burgundy:#e0959e; --violet:#b6a8dd; --forest:#8fc298; --gold:#dbab52;
+      --on:#171715; --flash:rgba(219,171,82,0.28);
+    }
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+  body{ margin:0; background:var(--bg); color:var(--ink); line-height:1.5;
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; }
+  .wrap{ max-width:960px; margin:0 auto; padding:36px 18px 72px; }
+
+  header .kicker{ font-size:13px; font-weight:600; color:var(--soft); margin-bottom:6px; }
+  h1{ margin:0 0 10px; font-size:clamp(26px,6vw,36px); line-height:1.15; }
+  .lede{ margin:0; max-width:60ch; font-size:15px; color:var(--soft); }
+
+  .notice{ margin:18px 0 0; padding:12px 14px; border:1px solid var(--burgundy); border-radius:6px; font-size:13.5px; }
+  .notice ul{ margin:6px 0 0; padding-left:18px; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:8px 18px; margin:22px 0 26px; padding:12px 0;
+           border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); }
+  .legend-item{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--soft); }
+  .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .dot.state,.cal-day.state{ background:var(--navy); }
+  .dot.memory,.cal-day.memory{ background:var(--burgundy); }
+  .dot.faith,.cal-day.faith{ background:var(--violet); }
+  .dot.folk,.cal-day.folk{ background:var(--forest); }
+  .dot.sum,.cal-day.sum{ background:var(--gold); }
+
+  /* зразки в легенді для позначок «заплановано» */
+  .sample{ position:relative; width:15px; height:15px; border-radius:3px; flex:none; }
+  .sample::after{ content:""; position:absolute; top:2px; right:2px; width:5px; height:5px; border-radius:50%; }
+  .sample.dotted{ background:var(--soft); }
+  .sample.dotted::after{ background:var(--on); }
+  .sample.framed{ border:2px solid var(--ink); }
+  .sample.framed::after{ background:var(--ink); }
+
+  .cal-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:18px; }
+  .cal-month{ border:1px solid var(--rule); border-radius:6px; padding:12px 12px 14px; }
+  .cal-title{ display:inline-block; margin-bottom:8px; font-weight:700; font-size:15px; color:var(--ink); text-decoration:none; }
+  .cal-title span{ font-weight:400; color:var(--soft); font-size:13px; }
+  .cal-title:hover{ text-decoration:underline; }
+  .cal-dow,.cal-days{ display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  .cal-dow{ margin-bottom:3px; }
+  .cal-dow span{ font-size:10px; text-align:center; font-weight:600; color:var(--soft); }
+  .cal-day{ position:relative; aspect-ratio:1; min-height:30px; display:flex; align-items:center; justify-content:center;
+            font-size:13px; border-radius:4px; color:var(--soft); text-decoration:none; }
+  a.cal-day{ font-weight:700; cursor:pointer; }
+  a.cal-day:hover{ opacity:0.85; }
+  a.cal-day:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+  a.cal-day.filled{ color:var(--on); }                                   /* свято — кольорова заливка */
+  a.cal-day.planonly{ color:var(--ink); border:2px solid var(--ink); }   /* лише план — рамка */
+  .cal-day.planned::after{ content:""; position:absolute; top:3px; right:3px; width:7px; height:7px;
+                           border-radius:50%; background:var(--on); }    /* є план — крапка */
+  .cal-day.planonly.planned::after{ background:var(--ink); }
+  .cal-day.today{ color:var(--ink); font-weight:700; text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:2px; }
+  a.cal-day.filled.today{ color:var(--on); }
+
+  .events{ margin-top:52px; }
+  .events > h2{ margin:0 0 4px; font-size:22px; }
+  section.month{ margin-top:34px; scroll-margin-top:12px; }
+  .month-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 6px;
+               padding-bottom:8px; border-bottom:1px solid var(--rule); font-size:19px; }
+  .month-head .up{ font-size:12.5px; font-weight:400; color:var(--soft); text-decoration:none; white-space:nowrap; }
+  .month-head .up:hover{ text-decoration:underline; }
+  ul.days{ list-style:none; margin:0; padding:0; }
+  li.day{ display:grid; grid-template-columns:64px minmax(0,1fr); gap:12px; padding:12px 6px;
+          border-bottom:1px solid var(--rule); scroll-margin-top:16px; }
+  li.day:last-child{ border-bottom:none; }
+  li.day.flash{ animation:flash 2.2s ease-out; }
+  @keyframes flash{ from{ background:var(--flash); } to{ background:transparent; } }
+  .empty-month{ padding:12px 6px; font-size:14px; color:var(--soft); }
+  .date{ font-weight:600; font-size:14px; color:var(--soft); }
+  .entry{ padding-left:12px; border-left:3px solid transparent; }
+  .entry.state{ border-color:var(--navy); }
+  .entry.memory{ border-color:var(--burgundy); }
+  .entry.faith{ border-color:var(--violet); }
+  .entry.folk{ border-color:var(--forest); }
+  .entry.sum{ border-color:var(--gold); }
+  .entry.plan{ padding-left:0; border-left:0; }
+  .title{ font-weight:600; font-size:15.5px; }
+  .tag{ font-weight:400; font-size:13px; color:var(--soft); }
+  .desc{ margin-top:2px; font-size:14px; color:var(--soft); }
+
+  /* блок «заплановано» у списку подій */
+  .plan{ margin-top:10px; padding:9px 11px; border:1px solid var(--ink); border-radius:5px; }
+  .entry.plan > .plan:first-child{ margin-top:0; }
+  .plan-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; }
+  .plan-badge{ padding:1px 9px; border-radius:99px; background:var(--ink); color:var(--bg); font-size:12px; font-weight:600; }
+  .plan-title{ font-weight:600; font-size:15px; }
+  .plan-meta{ margin-top:4px; font-size:13.5px; color:var(--soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">Мадридський осередок СУМ</div>
+    <h1 id="pageTitle">Календар свят</h1>
+    <p class="lede">Державні, пам'ятні, релігійні та народні дати України й СУМівські свята. Натисніть на підсвічене число — відкриється подія цього дня.</p>
+  </header>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <div class="legend" id="legend"></div>
+
+  <section id="calendar">
+    <div class="cal-grid" id="calGrid"></div>
+  </section>
+
+  <section class="events">
+    <h2>Події по місяцях</h2>
+    <div id="eventList"></div>
+  </section>
+
+  <noscript><p class="lede">Щоб побачити календар, увімкніть JavaScript у браузері.</p></noscript>
+</div>
+
+<!-- Свята: events.js. Наші заплановані заходи: plans.js (файлу може й не бути). -->
+<script src="events.js"></script>
+<script src="plans.js" onload="window.__plansLoaded=true"></script>
+<script>
+(function(){
+  var CATS = {
+    state:  "Державне свято",
+    memory: "Пам'ятна дата",
+    faith:  "Релігійне свято",
+    folk:   "Народний звичай",
+    sum:    "СУМівське свято"
+  };
+  var MONTHS_NOM = ["Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"];
+  var MONTHS_GEN = ["січня","лютого","березня","квітня","травня","червня","липня","серпня","вересня","жовтня","листопада","грудня"];
+  var DOW = ["нд","пн","вт","ср","чт","пт","сб"];            // як їх рахує JavaScript: 0 = неділя
+  var DOW_HEAD = ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"];
+
+  function el(tag, cls, text){
+    var n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(text != null) n.textContent = text;
+    return n;
+  }
+  function pad(n){ return String(n).padStart(2, "0"); }
+  function isoOf(dt){ return dt.getFullYear() + "-" + pad(dt.getMonth() + 1) + "-" + pad(dt.getDate()); }
+  function nextDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); }
+
+  var notice = document.getElementById("notice");
+  function showNotice(heading, list){
+    notice.hidden = false;
+    notice.textContent = "";
+    notice.appendChild(el("strong", null, heading));
+    if(list && list.length){
+      var ul = el("ul");
+      list.forEach(function(t){ ul.appendChild(el("li", null, t)); });
+      notice.appendChild(ul);
+    }
+  }
+
+  // Легенда: категорії свят
+  var legend = document.getElementById("legend");
+  Object.keys(CATS).forEach(function(k){
+    var item = el("span", "legend-item");
+    item.appendChild(el("span", "dot " + k));
+    item.appendChild(document.createTextNode(CATS[k]));
+    legend.appendChild(item);
+  });
+
+  // events.js не прочитався (немає файлу або в ньому синтаксична помилка)
+  if(typeof CALENDAR_EVENTS === "undefined" || !Array.isArray(CALENDAR_EVENTS)){
+    showNotice("Не вдалося прочитати файл events.js.",
+      ["Найчастіша причина — пропущена лапка, кома або дужка в щойно зміненому рядку.",
+       "Поверніть попередню версію файлу (на GitHub: відкрийте events.js → History → потрібна версія)."]);
+    return;
+  }
+
+  var TITLE  = (typeof CALENDAR_TITLE === "string" && CALENDAR_TITLE) ? CALENDAR_TITLE : "Календар свят";
+  var START  = (typeof CALENDAR_START === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(CALENDAR_START)) ? CALENDAR_START : "2026-09";
+  var COUNT  = (typeof CALENDAR_MONTHS === "number" && CALENDAR_MONTHS >= 1 && CALENDAR_MONTHS <= 24) ? Math.floor(CALENDAR_MONTHS) : 12;
+  document.getElementById("pageTitle").textContent = TITLE;
+  document.title = TITLE + " — СУМ Мадрид";
+
+  // Місяці, які показує календар
+  var sp = START.split("-"), y0 = +sp[0], m0 = +sp[1];
+  var months = [], monthKeys = {};
+  for(var i = 0; i < COUNT; i++){
+    var mm = m0 - 1 + i;
+    var M = { y: y0 + Math.floor(mm / 12), m: (mm % 12) + 1 };
+    M.key = M.y + "-" + pad(M.m);
+    months.push(M);
+    monthKeys[M.key] = true;
+  }
+
+  function parseDate(s){
+    var r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if(!r) return null;
+    var y = +r[1], mo = +r[2], d = +r[3], dt = new Date(y, mo - 1, d);
+    if(dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+    return { y: y, m: mo, d: d, dt: dt, iso: s };
+  }
+  function fmtRange(a, b){
+    if(!b || b.iso === a.iso) return a.d + " " + MONTHS_GEN[a.m - 1];
+    if(a.m === b.m && a.y === b.y) return a.d + "–" + b.d + " " + MONTHS_GEN[a.m - 1];
+    return a.d + " " + MONTHS_GEN[a.m - 1] + " – " + b.d + " " + MONTHS_GEN[b.m - 1];
+  }
+
+  // ---------- Свята (events.js) ----------
+  var problems = [], items = [], idCount = {};
+  CALENDAR_EVENTS.forEach(function(e, idx){
+    var where = "events.js, запис №" + (idx + 1) + ((e && e.title) ? " («" + e.title + "»)" : "");
+    if(!e || typeof e !== "object"){ problems.push(where + ": неправильний запис"); return; }
+    if(!e.title){ problems.push(where + ": немає назви (title)"); return; }
+    if(!CATS[e.cat]){ problems.push(where + ": невідома категорія «" + e.cat + "» (є: state, memory, faith, folk, sum)"); return; }
+
+    var it = {
+      order: idx, cat: e.cat, title: String(e.title),
+      tag: e.tag ? String(e.tag) : "", desc: e.desc ? String(e.desc) : "",
+      label: e.label ? String(e.label) : "", start: null, end: null, monthKey: null, id: null,
+      plans: [], planOnly: false
+    };
+    var ds = String(e.date || "");
+    var full = parseDate(ds);
+    if(full){
+      it.start = full;
+      it.monthKey = ds.slice(0, 7);
+      if(e.end){
+        var en = parseDate(String(e.end));
+        if(!en || en.dt < full.dt){ problems.push(where + ": неправильна дата закінчення (end)"); return; }
+        it.end = en;
+      }
+      var c = (idCount[ds] = (idCount[ds] || 0) + 1);
+      it.id = "d-" + ds + (c > 1 ? "-" + c : "");
+    } else if(/^\d{4}-(0[1-9]|1[0-2])$/.test(ds)){
+      it.monthKey = ds;
+    } else {
+      problems.push(where + ": неправильна дата «" + ds + "» (потрібно РРРР-ММ-ДД, наприклад 2027-05-09)");
+      return;
+    }
+    if(!monthKeys[it.monthKey]){
+      problems.push(where + ": дата " + ds + " поза місяцями календаря (див. CALENDAR_START і CALENDAR_MONTHS)");
+      return;
+    }
+    items.push(it);
+  });
+
+  // День → перше свято цього дня (для багатоденних — усі дні)
+  var hol = {};
+  items.forEach(function(it){
+    if(!it.start) return;
+    var last = it.end ? it.end.dt : it.start.dt;
+    for(var d = new Date(it.start.dt); d <= last; d = nextDay(d)){
+      var iso = isoOf(d);
+      if(!hol[iso]) hol[iso] = it;
+    }
+  });
+
+  // ---------- Плани осередку (plans.js) ----------
+  var planned = {};      // дата → true, якщо в цей день у нас щось заплановано
+  var plansOn = {};      // дата → назви планів
+  var target = {};       // дата → запис, до якого веде клік по числу
+  Object.keys(hol).forEach(function(k){ target[k] = hol[k]; });
+
+  var PLANS = [];
+  if(window.__plansLoaded && typeof CALENDAR_PLANS === "undefined"){
+    problems.push("Файл plans.js не вдалося прочитати: перевірте лапки, коми й дужки в останньому зміненому рядку. Плани поки не показано.");
+  } else if(typeof CALENDAR_PLANS !== "undefined"){
+    if(Array.isArray(CALENDAR_PLANS)) PLANS = CALENDAR_PLANS;
+    else problems.push("plans.js: CALENDAR_PLANS має бути списком у квадратних дужках [ ... ]");
+  }
+  var plansCount = 0;
+  PLANS.forEach(function(p, idx){
+    var where = "plans.js, план №" + (idx + 1) + ((p && p.title) ? " («" + p.title + "»)" : "");
+    if(!p || typeof p !== "object"){ problems.push(where + ": неправильний запис"); return; }
+    if(!p.title){ problems.push(where + ": немає назви (title)"); return; }
+    var s = parseDate(String(p.date || ""));
+    if(!s){ problems.push(where + ": неправильна дата «" + (p.date || "") + "» (потрібно РРРР-ММ-ДД, наприклад 2026-11-08)"); return; }
+    var e2 = s;
+    if(p.end){
+      e2 = parseDate(String(p.end));
+      if(!e2 || e2.dt < s.dt){ problems.push(where + ": неправильна дата закінчення (end)"); return; }
+      if((e2.dt - s.dt) / 86400000 > 120){ problems.push(where + ": подія довша за 120 днів — перевірте end"); return; }
+    }
+    if(!monthKeys[s.iso.slice(0, 7)]){ problems.push(where + ": дата " + s.iso + " поза місяцями календаря"); return; }
+
+    var plan = {
+      title: String(p.title), time: p.time ? String(p.time) : "", place: p.place ? String(p.place) : "",
+      who: p.who ? String(p.who) : "", desc: p.desc ? String(p.desc) : "",
+      start: s, end: p.end ? e2 : null
+    };
+    var host = target[s.iso];
+    if(!host){
+      host = { order: 1000000 + idx, cat: "plan", title: "", tag: "", desc: "", label: "", start: s, end: null,
+               monthKey: s.iso.slice(0, 7), id: "d-" + s.iso, plans: [], planOnly: true };
+      items.push(host);
+      target[s.iso] = host;
+    }
+    host.plans.push(plan);
+    plansCount++;
+    for(var d = new Date(s.dt); d <= e2.dt; d = nextDay(d)){
+      var iso = isoOf(d);
+      if(!monthKeys[iso.slice(0, 7)]) continue;
+      planned[iso] = true;
+      (plansOn[iso] = plansOn[iso] || []).push(plan.title);
+      if(!target[iso]) target[iso] = host;
+    }
+  });
+
+  if(problems.length) showNotice("Є помилки у файлах з даними — ці записи не показано:", problems);
+
+  // Легенда для позначок «заплановано» — лише коли такі плани є
+  if(plansCount){
+    [["dotted", "Крапка — у цей день у нас щось заплановано"],
+     ["framed", "Рамка — день без свята, але з планом"]].forEach(function(x){
+      var item = el("span", "legend-item");
+      item.appendChild(el("span", "sample " + x[0]));
+      item.appendChild(document.createTextNode(x[1]));
+      legend.appendChild(item);
+    });
+  }
+
+  function tip(it){ return it.title + (it.tag ? " — " + it.tag : ""); }
+  function cellTip(iso){
+    var parts = [];
+    if(hol[iso]) parts.push(tip(hol[iso]));
+    if(planned[iso]) parts.push("Заплановано: " + plansOn[iso].join(", "));
+    return parts.join(" · ");
+  }
+
+  // ---------- Сітка календаря ----------
+  var grid = document.getElementById("calGrid");
+  months.forEach(function(M){
+    var card = el("div", "cal-month");
+    var title = el("a", "cal-title");
+    title.href = "#month-" + M.key;
+    title.appendChild(document.createTextNode(MONTHS_NOM[M.m - 1] + " "));
+    title.appendChild(el("span", null, String(M.y)));
+    card.appendChild(title);
+
+    var dow = el("div", "cal-dow");
+    DOW_HEAD.forEach(function(x){ dow.appendChild(el("span", null, x)); });
+    card.appendChild(dow);
+
+    var days = el("div", "cal-days");
+    var lead = (new Date(M.y, M.m - 1, 1).getDay() + 6) % 7;   // тиждень починається з понеділка
+    for(var k = 0; k < lead; k++) days.appendChild(el("span", "cal-day empty"));
+    var n = new Date(M.y, M.m, 0).getDate();
+    for(var d = 1; d <= n; d++){
+      var iso = M.key + "-" + pad(d), tg = target[iso], cell;
+      if(tg){
+        var cls = "cal-day " + (hol[iso] ? "filled " + hol[iso].cat : "planonly") + (planned[iso] ? " planned" : "");
+        cell = el("a", cls, String(d));
+        cell.href = "#" + tg.id;
+        cell.title = cellTip(iso);
+        cell.setAttribute("aria-label", d + " " + MONTHS_GEN[M.m - 1] + ": " + cellTip(iso));
+      } else {
+        cell = el("span", "cal-day", String(d));
+      }
+      cell.setAttribute("data-date", iso);
+      days.appendChild(cell);
+    }
+    card.appendChild(days);
+    grid.appendChild(card);
+  });
+
+  // ---------- Список подій по місяцях ----------
+  function planBox(pl, host){
+    var box = el("div", "plan");
+    var head = el("div", "plan-head");
+    head.appendChild(el("span", "plan-badge", "Заплановано"));
+    head.appendChild(el("span", "plan-title", pl.title));
+    box.appendChild(head);
+    var meta = [];
+    if(pl.end || pl.start.iso !== host.start.iso) meta.push(fmtRange(pl.start, pl.end));
+    if(pl.time) meta.push(pl.time);
+    if(pl.place) meta.push(pl.place);
+    if(pl.who) meta.push("для: " + pl.who);
+    if(meta.length) box.appendChild(el("div", "plan-meta", meta.join(" · ")));
+    if(pl.desc) box.appendChild(el("div", "desc", pl.desc));
+    return box;
+  }
+
+  var list = document.getElementById("eventList");
+  months.forEach(function(M){
+    var sec = el("section", "month");
+    sec.id = "month-" + M.key;
+    var head = el("h3", "month-head");
+    head.appendChild(el("span", null, MONTHS_NOM[M.m - 1] + " " + M.y));
+    var up = el("a", "up", "↑ до календаря");
+    up.href = "#calendar";
+    head.appendChild(up);
+    sec.appendChild(head);
+
+    var inMonth = items.filter(function(it){ return it.monthKey === M.key; });
+    inMonth.sort(function(a, b){
+      var ka = a.start ? a.start.iso : "9999", kb = b.start ? b.start.iso : "9999";
+      return ka < kb ? -1 : ka > kb ? 1 : a.order - b.order;
+    });
+
+    if(!inMonth.length){
+      sec.appendChild(el("div", "empty-month", "Подій у цьому місяці поки немає."));
+    } else {
+      var ul = el("ul", "days");
+      inMonth.forEach(function(it){
+        var label;
+        if(it.start && it.end){
+          label = (it.end.m === it.start.m) ? it.start.d + "–" + it.end.d
+                                            : pad(it.start.d) + "." + pad(it.start.m) + "–" + pad(it.end.d) + "." + pad(it.end.m);
+        } else if(it.start){
+          label = it.start.d + " " + DOW[it.start.dt.getDay()];
+        } else {
+          label = it.label;
+        }
+        var li = el("li", "day");
+        if(it.id) li.id = it.id;
+        li.appendChild(el("span", "date", label));
+        var entry = el("div", "entry " + (it.planOnly ? "plan" : it.cat));
+        if(!it.planOnly){
+          var t = el("div", "title", it.title);
+          if(it.tag){ t.appendChild(document.createTextNode(" ")); t.appendChild(el("span", "tag", "— " + it.tag)); }
+          entry.appendChild(t);
+          if(it.desc) entry.appendChild(el("div", "desc", it.desc));
+        }
+        it.plans.forEach(function(pl){ entry.appendChild(planBox(pl, it)); });
+        li.appendChild(entry);
+        ul.appendChild(li);
+      });
+      sec.appendChild(ul);
+    }
+    list.appendChild(sec);
+  });
+
+  // Сьогоднішній день
+  var todayCell = document.querySelector('[data-date="' + isoOf(new Date()) + '"]');
+  if(todayCell) todayCell.classList.add("today");
+
+  // Перехід до події з підсвічуванням
+  function goTo(id, smooth){
+    var t = document.getElementById(id);
+    if(!t) return;
+    t.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+    if(id.indexOf("d-") === 0){
+      t.classList.remove("flash");
+      void t.offsetWidth;
+      t.classList.add("flash");
+      setTimeout(function(){ t.classList.remove("flash"); }, 2300);
+    }
+  }
+  document.addEventListener("click", function(e){
+    var a = e.target.closest && e.target.closest("a.cal-day");
+    if(!a) return;
+    e.preventDefault();
+    var id = a.getAttribute("href").slice(1);
+    try { history.pushState(null, "", "#" + id); } catch(err){ location.hash = id; return; }
+    goTo(id, true);
+  });
+  window.addEventListener("hashchange", function(){ goTo(location.hash.slice(1), true); });
+  // Посилання на конкретну подію (…/#d-2026-11-01) відкриває її одразу
+  if(location.hash.length > 1) setTimeout(function(){ goTo(location.hash.slice(1), false); }, 50);
+})();
+</script>
+</body>
+</html>
